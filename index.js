@@ -49,23 +49,28 @@ app.post('/gerar-comprovante', async (req, res) => {
   
   try {
     const {
-      nomeRemetente = "Virginia Fonseca Costa",
-      cpfRemetente = "***.907.070-**",
-      bancoRemetente = "Banco Bradesco S.A.",
-      nomeDestinatario = "Daniel De Lima Mendes",
-      cpfDestinatario = "***.641.357-**",
-      bancoDestinatario = "Nubank",
-      chavePix = "teste@teste.com",
-      valor = "R$ 1.000,00",
-      tarifa = "R$ 0,00",
-      descricao = "Corrente",
-      tipoConta = "Poupança",
-      dataHora = new Date().toLocaleString('pt-BR'),
-      numeroControle = "9B8C7D59716B63DBB48D5A8A37FABDC",
-      autenticacao = "m7efjKlQX2bo+ZMyme7OhIlIlaX8V3X3 Ck1Pz8yj4E="
+      nomeRemetente,
+      cpfRemetente,
+      bancoRemetente,
+      nomeDestinatario,
+      cpfDestinatario,
+      bancoDestinatario,
+      chavePix,
+      valor,
+      tarifa,
+      descricao,
+      tipoConta,
+      dataHora,
+      numeroControle,
+      autenticacao
     } = req.body;
 
-    console.log('Dados recebidos:', { nomeRemetente, nomeDestinatario, valor });
+    console.log('Dados recebidos:', { 
+      nomeRemetente, 
+      nomeDestinatario, 
+      valor,
+      dataHora 
+    });
 
     const templatePath = path.join(__dirname, 'views', 'comprovante.ejs');
     console.log('Caminho do template:', templatePath);
