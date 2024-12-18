@@ -4,7 +4,17 @@ const ejs = require('ejs');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 const app = express();
-app.use(cors());
+
+// Configure CORS to allow all origins, methods, and headers
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
+
 app.use(bodyParser.json());
 
 app.post('/gerar-comprovante', async (req, res) => {
