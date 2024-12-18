@@ -33,7 +33,7 @@ fs.mkdir(viewsDir, { recursive: true }).catch(console.error);
 // Função para obter o caminho do Chrome baseado no ambiente
 const getChromePath = () => {
   if (process.env.NODE_ENV === 'production') {
-    return '/app/.apt/usr/bin/google-chrome';
+    return '/app/.chrome-for-testing/chrome-linux64/chrome';
   }
   return process.platform === 'win32'
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
