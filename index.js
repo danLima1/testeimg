@@ -33,7 +33,7 @@ fs.mkdir(viewsDir, { recursive: true }).catch(console.error);
 // Função para obter o caminho do Chrome baseado no ambiente
 const getChromePath = () => {
   if (process.env.NODE_ENV === 'production') {
-    return process.env.CHROME_BIN || '/app/.chrome/chrome/chrome';
+    return process.env.GOOGLE_CHROME_SHIM || process.env.GOOGLE_CHROME_BIN || '/app/.apt/opt/google/chrome/chrome';
   }
   return process.platform === 'win32'
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
@@ -102,8 +102,12 @@ app.post('/gerar-comprovante', async (req, res) => {
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--disable-software-rasterizer'
-      ]
+        '--no-first-run',
+        '--no-zygote',
+        '--single-process',
+        '--disable-extensions'
+      ],
+      ignoreHTTPSErrors: true
     });
 
     console.log('Browser iniciado');
