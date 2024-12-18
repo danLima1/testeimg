@@ -8,7 +8,7 @@ const fs = require('fs').promises;
 const crypto = require('crypto');
 const app = express();
 
-// Configure CORS to allow all origins, methods, and headers
+// Configure CORS
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -18,63 +18,76 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Serve static files from the public directory
-app.use('/public', express.static('public'));
+// Middleware
 app.use(bodyParser.json());
+app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Ensure public/images directory exists
+// Ensure directories exist
 const publicImagesDir = path.join(__dirname, 'public', 'images');
 fs.mkdir(publicImagesDir, { recursive: true }).catch(console.error);
 
 // Função para obter o caminho do Chrome baseado no ambiente
 const getChromePath = () => {
   if (process.env.NODE_ENV === 'production') {
-    // Caminho do Chrome no Heroku
     return process.env.CHROME_EXECUTABLE_PATH || '/app/.apt/usr/bin/google-chrome';
   }
-  // Caminho local para desenvolvimento
   return process.platform === 'win32'
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
     : '/usr/bin/google-chrome';
 };
 
-app.post('/gerar-comprovante', async (req, res) => {
-  const {
-    nomeRemetente,
-    cpfRemetente,
-    bancoRemetente,
-    nomeDestinatario,
-    cpfDestinatario,
-    bancoDestinatario,
-    chavePix,
-    valor,
-    tarifa,
-    descricao,
-    tipoConta,
-    dataHora,
-    numeroControle,
-    autenticacao
-  } = req.body;
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
 
+app.post('/gerar-comprovante', async (req, res) => {
+  console.log('Recebendo requisição para gerar comprovante');
+  
   try {
-    const html = await ejs.renderFile('./views/comprovante.ejs', {
-      nomeRemetente: nomeRemetente || "Virginia Fonseca Costa",
-      cpfRemetente: cpfRemetente || "***.907.070-**",
-      bancoRemetente: bancoRemetente || "Banco Bradesco S.A.",
-      nomeDestinatario: nomeDestinatario || "Daniel De Lima Mendes",
-      cpfDestinatario: cpfDestinatario || "***.641.357-**",
-      bancoDestinatario: bancoDestinatario || "aw",
-      chavePix: chavePix || "a",
-      valor: valor || "R$ 1.000,00",
-      tarifa: tarifa || "R$ 0,00",
-      descricao: descricao || "Corrente",
-      tipoConta: tipoConta || "Poupança",
-      dataHora: dataHora || new Date().toLocaleString('pt-BR'),
-      numeroControle: numeroControle || "9B8C7D59716B63DBB48D5A8A37FABDC",
-      autenticacao: autenticacao || "m7efjKlQX2bo+ZMyme7OhIlIlaX8V3X3 Ck1Pz8yj4E="
+    const {
+      nomeRemetente = "Virginia Fonseca Costa",
+      cpfRemetente = "***.907.070-**",
+      bancoRemetente = "Banco Bradesco S.A.",
+      nomeDestinatario = "Daniel De Lima Mendes",
+      cpfDestinatario = "***.641.357-**",
+      bancoDestinatario = "Nubank",
+      chavePix = "teste@teste.com",
+      valor = "R$ 1.000,00",
+      tarifa = "R$ 0,00",
+      descricao = "Corrente",
+      tipoConta = "Poupança",
+      dataHora = new Date().toLocaleString('pt-BR'),
+      numeroControle = "9B8C7D59716B63DBB48D5A8A37FABDC",
+      autenticacao = "m7efjKlQX2bo+ZMyme7OhIlIlaX8V3X3 Ck1Pz8yj4E="
+    } = req.body;
+
+    console.log('Dados recebidos:', { nomeRemetente, nomeDestinatario, valor });
+
+    const templatePath = path.join(__dirname, 'views', 'comprovante.ejs');
+    console.log('Caminho do template:', templatePath);
+
+    // Verifica se o arquivo existe
+    await fs.access(templatePath);
+
+    const html = await ejs.renderFile(templatePath, {
+      nomeRemetente,
+      cpfRemetente,
+      bancoRemetente,
+      nomeDestinatario,
+      cpfDestinatario,
+      bancoDestinatario,
+      chavePix,
+      valor,
+      tarifa,
+      descricao,
+      tipoConta,
+      dataHora,
+      numeroControle,
+      autenticacao
     });
 
-    // Configuração do browser com puppeteer-core
+    console.log('Template renderizado com sucesso');
+
     const browser = await puppeteer.launch({
       headless: true,
       executablePath: getChromePath(),
@@ -87,6 +100,8 @@ app.post('/gerar-comprovante', async (req, res) => {
         '--lang=pt-BR'
       ]
     });
+
+    console.log('Browser iniciado');
 
     const page = await browser.newPage();
     await page.setContent(html, {waitUntil: 'networkidle0'});
@@ -101,9 +116,12 @@ app.post('/gerar-comprovante', async (req, res) => {
       type: 'png'
     });
     
+    console.log('Screenshot gerado:', filePath);
+    
     await browser.close();
 
     const imageUrl = `${req.protocol}://${req.get('host')}/public/images/${fileName}`;
+    console.log('URL da imagem:', imageUrl);
     
     res.json({ 
       success: true,
@@ -114,18 +132,25 @@ app.post('/gerar-comprovante', async (req, res) => {
     setTimeout(async () => {
       try {
         await fs.unlink(filePath);
+        console.log('Arquivo removido:', filePath);
       } catch (err) {
-        console.error('Error deleting file:', err);
+        console.error('Erro ao remover arquivo:', err);
       }
-    }, 1800000); // Remove após 30 minutos
+    }, 1800000); // 30 minutos
     
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao gerar comprovante' });
+    console.error('Erro detalhado:', error);
+    res.status(500).json({ 
+      error: 'Erro ao gerar comprovante',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+  console.log('Ambiente:', process.env.NODE_ENV);
+  console.log('Caminho do Chrome:', getChromePath());
 });
