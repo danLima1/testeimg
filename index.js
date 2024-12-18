@@ -26,10 +26,14 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 const publicImagesDir = path.join(__dirname, 'public', 'images');
 fs.mkdir(publicImagesDir, { recursive: true }).catch(console.error);
 
+// Também criar o diretório views
+const viewsDir = path.join(__dirname, 'views');
+fs.mkdir(viewsDir, { recursive: true }).catch(console.error);
+
 // Função para obter o caminho do Chrome baseado no ambiente
 const getChromePath = () => {
   if (process.env.NODE_ENV === 'production') {
-    return process.env.CHROME_EXECUTABLE_PATH || '/app/.apt/usr/bin/google-chrome';
+    return '/app/.apt/usr/bin/google-chrome';
   }
   return process.platform === 'win32'
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
@@ -90,13 +94,14 @@ app.post('/gerar-comprovante', async (req, res) => {
 
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: getChromePath(),
+      executablePath: process.env.CHROME_EXECUTABLE_PATH || getChromePath(),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
+        '--window-size=800,1200',
         '--lang=pt-BR'
       ]
     });
@@ -104,8 +109,8 @@ app.post('/gerar-comprovante', async (req, res) => {
     console.log('Browser iniciado');
 
     const page = await browser.newPage();
-    await page.setContent(html, {waitUntil: 'networkidle0'});
     await page.setViewport({ width: 800, height: 1200 });
+    await page.setContent(html, {waitUntil: 'networkidle0'});
     
     const fileName = `comprovante-${crypto.randomBytes(8).toString('hex')}.png`;
     const filePath = path.join(publicImagesDir, fileName);
@@ -153,4 +158,4 @@ app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
   console.log('Ambiente:', process.env.NODE_ENV);
   console.log('Caminho do Chrome:', getChromePath());
-});
+}); 
