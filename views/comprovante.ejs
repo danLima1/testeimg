@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Comprovante Pix</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 0;
+      line-height: 1.4;
+      color: #000;
+      min-height: auto;
+      height: fit-content;
+      zoom: 1.2;
+    }
+    .logo {
+      font-weight: bold;
+      color: #C30000;
+      font-size: 24px;
+      margin: 0 0 10px 0;
+      text-transform: lowercase;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 0;
+      text-align: center;
+    }
+    .subtitle {
+      margin: 0 0 15px 0;
+      text-align: center;
+    }
+    .dados, .section-title {
+      margin: 0 0 10px 0;
+    }
+    .section-title {
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
+    .dados:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    strong {
+      font-weight: bold;
+    }
+    .dados {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .autenticacao {
+      font-family: monospace;
+      font-size: 12px;
+      word-break: break-all;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">bradesco</div>
+  <div style="text-align: center;">
+    <div class="title">Comprovante Pix</div>
+    <div class="subtitle">Transferência agendada para chave Pix</div>
+  </div>
+  
+  <div class="dados">
+    Data e hora: <%= dataHora %><br>
+    Número de Controle: <%= numeroControle %>
+  </div>
+
+  <div class="section-title">DADOS DA CONTA</div>
+  <div class="dados">
+    Nome: <%= nomeRemetente %><br>
+    CPF: <%= cpfRemetente %><br>
+    Instituição: <%= bancoRemetente %>
+  </div>
+
+  <div class="section-title">DADOS DE QUEM RECEBEU</div>
+  <div class="dados">
+    Nome: <%= nomeDestinatario %><br>
+    CPF/CNPJ: <%= cpfDestinatario %><br>
+    Instituição: <%= bancoDestinatario %><br>
+    Chave: <%= chavePix %>
+  </div>
+
+  <div class="section-title">DADOS DA TRANSFERÊNCIA</div>
+  <div class="dados">
+    Valor: <%= valor %><br>
+    Tarifa: <%= tarifa %><br>
+    Descrição: <%= descricao %><br>
+    Data e hora: <%= dataHora %><br>
+    Debitado da: <%= tipoConta %>
+  </div>
+
+  <div class="dados">
+    Transação concluída pelo Bradesco Celular
+  </div>
+
+  <div class="section-title">AUTENTICAÇÃO</div>
+  <div class="dados autenticacao">
+    <%= autenticacao %>
+  </div>
+</body>
+</html>
