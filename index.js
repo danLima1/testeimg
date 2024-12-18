@@ -33,7 +33,7 @@ fs.mkdir(viewsDir, { recursive: true }).catch(console.error);
 // Função para obter o caminho do Chrome baseado no ambiente
 const getChromePath = () => {
   if (process.env.NODE_ENV === 'production') {
-    return '/app/.apt/usr/bin/google-chrome';
+    return process.env.PUPPETEER_EXECUTABLE_PATH || '/app/.apt/usr/bin/google-chrome';
   }
   return process.platform === 'win32'
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
@@ -92,9 +92,11 @@ app.post('/gerar-comprovante', async (req, res) => {
 
     console.log('Template renderizado com sucesso');
 
+    console.log('Iniciando browser com caminho:', getChromePath());
+    
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: process.env.CHROME_EXECUTABLE_PATH || getChromePath(),
+      executablePath: getChromePath(),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -102,8 +104,11 @@ app.post('/gerar-comprovante', async (req, res) => {
         '--disable-accelerated-2d-canvas',
         '--disable-gpu',
         '--window-size=800,1200',
-        '--lang=pt-BR'
-      ]
+        '--lang=pt-BR',
+        '--remote-debugging-port=9222'
+      ],
+      ignoreHTTPSErrors: true,
+      dumpio: true
     });
 
     console.log('Browser iniciado');
