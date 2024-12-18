@@ -1,8 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const ejs = require('ejs');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 const cors = require('cors');
+const path = require('path');
+const fs = require('fs').promises;
+const crypto = require('crypto');
 const app = express();
 
 // Configure CORS to allow all origins, methods, and headers
@@ -15,10 +18,27 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
+// Serve static files from the public directory
+app.use('/public', express.static('public'));
 app.use(bodyParser.json());
 
+// Ensure public/images directory exists
+const publicImagesDir = path.join(__dirname, 'public', 'images');
+fs.mkdir(publicImagesDir, { recursive: true }).catch(console.error);
+
+// Função para obter o caminho do Chrome baseado no ambiente
+const getChromePath = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // Caminho do Chrome no Heroku
+    return process.env.CHROME_EXECUTABLE_PATH || '/app/.apt/usr/bin/google-chrome';
+  }
+  // Caminho local para desenvolvimento
+  return process.platform === 'win32'
+    ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+    : '/usr/bin/google-chrome';
+};
+
 app.post('/gerar-comprovante', async (req, res) => {
-  // Dados vindos do Typebot (exemplo)
   const {
     nomeRemetente,
     cpfRemetente,
@@ -37,7 +57,6 @@ app.post('/gerar-comprovante', async (req, res) => {
   } = req.body;
 
   try {
-    // Renderiza o template com os dados recebidos
     const html = await ejs.renderFile('./views/comprovante.ejs', {
       nomeRemetente: nomeRemetente || "Virginia Fonseca Costa",
       cpfRemetente: cpfRemetente || "***.907.070-**",
@@ -55,24 +74,50 @@ app.post('/gerar-comprovante', async (req, res) => {
       autenticacao: autenticacao || "m7efjKlQX2bo+ZMyme7OhIlIlaX8V3X3 Ck1Pz8yj4E="
     });
 
-    // Gera o PDF ou a imagem usando Puppeteer
-    const browser = await puppeteer.launch({ headless: true });
+    // Configuração do browser com puppeteer-core
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: getChromePath(),
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--lang=pt-BR'
+      ]
+    });
+
     const page = await browser.newPage();
     await page.setContent(html, {waitUntil: 'networkidle0'});
-    // Ajusta o tamanho da página conforme necessário
     await page.setViewport({ width: 800, height: 1200 });
     
-    // Gera a imagem
-    const imageBuffer = await page.screenshot({ fullPage: true, type: 'png' });
+    const fileName = `comprovante-${crypto.randomBytes(8).toString('hex')}.png`;
+    const filePath = path.join(publicImagesDir, fileName);
+    
+    await page.screenshot({ 
+      path: filePath,
+      fullPage: true,
+      type: 'png'
+    });
+    
     await browser.close();
 
-    // Aqui você pode optar por:
-    // 1. Retornar a imagem base64
-    // 2. Salvar em algum storage (S3, Cloudinary, etc.) e retornar a URL
-    // Para simplicidade, retornarei base64
-
-    const base64Image = imageBuffer.toString('base64');
-    res.json({ image: `data:image/png;base64,${base64Image}` });
+    const imageUrl = `${req.protocol}://${req.get('host')}/public/images/${fileName}`;
+    
+    res.json({ 
+      success: true,
+      imageUrl: imageUrl
+    });
+    
+    // Limpar imagens antigas após um tempo
+    setTimeout(async () => {
+      try {
+        await fs.unlink(filePath);
+      } catch (err) {
+        console.error('Error deleting file:', err);
+      }
+    }, 1800000); // Remove após 30 minutos
     
   } catch (error) {
     console.error(error);
