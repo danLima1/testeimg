@@ -70,7 +70,7 @@
   </div>
   
   <div class="dados">
-    Data e hora: <%= dataHora %><br>
+    Data e hora: <%= new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) %><br>
     Número de Controle: <%= numeroControle %>
   </div>
 
@@ -94,7 +94,7 @@
     Valor: <%= valor %><br>
     Tarifa: <%= tarifa %><br>
     Descrição: <%= descricao %><br>
-    Data e hora: <%= dataHora %><br>
+    Data e hora: <%= new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) %><br>
     Debitado da: <%= tipoConta %>
   </div>
 
