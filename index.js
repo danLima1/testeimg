@@ -296,7 +296,9 @@ app.post('/gerar-gov', async (req, res) => {
       
       // Data atual para vencimento
       const dataAtual = new Date();
-      const dataFormatada = dataAtual.toLocaleDateString('pt-BR'); // Formato DD/MM/YYYY
+      // Ajusta para o fuso horário do Brasil (GMT-3)
+      const dataAjustada = new Date(dataAtual.getTime() - (3 * 60 * 60 * 1000));
+      const dataFormatada = dataAjustada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); // Formato DD/MM/YYYY
       
       // Adicionar datas em preto
       ctx.fillStyle = '#000000';
