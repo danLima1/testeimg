@@ -292,7 +292,7 @@ app.post('/gerar-gov', async (req, res) => {
       ctx.fillText(nome, 25, 135);
       
       // Configurar fonte menor para as datas
-      ctx.font = '12px "Arial Bold"';
+      ctx.font = '13px "Arial Bold"';
       
       // Data atual para vencimento
       const dataAtual = new Date();
