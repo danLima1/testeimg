@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const crypto = require('crypto');
 const Jimp = require('jimp');
+const { createCanvas, loadImage, registerFont } = require('canvas');
 
 const app = express();
 
@@ -255,6 +256,94 @@ app.post('/gerar-cartao', async (req, res) => {
     console.error('Erro ao gerar cartão:', error);
     res.status(500).json({
       error: 'Erro ao gerar cartão',
+      details: error.message
+    });
+  }
+});
+
+app.post('/gerar-gov', async (req, res) => {
+  try {
+    const { nome } = req.body;
+    
+    if (!nome) {
+      return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    try {
+      // Registrar a fonte
+      registerFont(path.join(__dirname, 'fonts', 'arial-bold-20.fnt.TTF'), { family: 'Arial Bold' });
+      
+      // Carregar a imagem base
+      const baseImagePath = path.join(__dirname, 'public', 'images', 'gov.jpeg');
+      const baseImage = await loadImage(baseImagePath);
+      
+      // Criar canvas com as dimensões da imagem
+      const canvas = createCanvas(baseImage.width, baseImage.height);
+      const ctx = canvas.getContext('2d');
+      
+      // Desenhar imagem base
+      ctx.drawImage(baseImage, 0, 0);
+      
+      // Configurar fonte para o nome
+      ctx.font = '16px "Arial Bold"';
+      ctx.fillStyle = '#000000';
+      
+      // Adicionar nome
+      ctx.fillText(nome, 25, 135);
+      
+      // Configurar fonte menor para as datas
+      ctx.font = '12px "Arial Bold"';
+      
+      // Data atual para vencimento
+      const dataAtual = new Date();
+      const dataFormatada = dataAtual.toLocaleDateString('pt-BR'); // Formato DD/MM/YYYY
+      
+      // Adicionar datas em preto
+      ctx.fillStyle = '#000000';
+      ctx.fillText(dataFormatada, 137, 180);
+      
+      // Adicionar data branca com fundo verde
+      ctx.fillStyle = 'green';
+      ctx.fillRect(630, 150, 100, 20);
+      
+      ctx.font = '16px Arial Bold';
+      ctx.fillStyle = 'white';
+      ctx.fillText(dataFormatada, 453, 182);
+      
+      // Gerar nome único para o arquivo
+      const fileName = `gov-${crypto.randomBytes(8).toString('hex')}.png`;
+      const outputPath = path.join(publicImagesDir, fileName);
+      
+      // Salvar a imagem
+      const buffer = canvas.toBuffer('image/png');
+      await fs.writeFile(outputPath, buffer);
+      
+      // Gerar URL da imagem
+      const imageUrl = `${req.protocol}://${req.get('host')}/public/images/${fileName}`;
+      
+      // Limpar a imagem após 30 minutos
+      setTimeout(async () => {
+        try {
+          await fs.unlink(outputPath);
+          console.log('Arquivo gov removido:', outputPath);
+        } catch (err) {
+          console.error('Erro ao remover arquivo gov:', err);
+        }
+      }, 1800000);
+      
+      res.json({
+        success: true,
+        imageUrl
+      });
+    } catch (imageError) {
+      console.error('Erro ao processar imagem:', imageError);
+      throw imageError;
+    }
+    
+  } catch (error) {
+    console.error('Erro ao gerar documento gov:', error);
+    res.status(500).json({
+      error: 'Erro ao gerar documento gov',
       details: error.message
     });
   }
