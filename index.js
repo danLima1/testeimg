@@ -312,6 +312,14 @@ app.post('/gerar-gov', async (req, res) => {
       ctx.fillStyle = 'white';
       ctx.fillText(dataFormatada, 453, 182);
       
+      // Adicionar valor com fundo verde
+      ctx.fillStyle = 'green';
+      ctx.fillRect(630, 190, 100, 20); // 40 pixels abaixo do primeiro retângulo
+      
+      ctx.font = '16px Arial Bold';
+      ctx.fillStyle = 'white';
+      ctx.fillText('R$ 42,90', 453, 231); // Ajustado para ficar centralizado no novo retângulo
+      
       // Gerar nome único para o arquivo
       const fileName = `gov-${crypto.randomBytes(8).toString('hex')}.png`;
       const outputPath = path.join(publicImagesDir, fileName);
