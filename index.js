@@ -263,8 +263,8 @@ app.post('/gerar-cartao', async (req, res) => {
 
 app.post('/gerar-gov', async (req, res) => {
   try {
-    const { nome } = req.body;
-    
+    const { nome, valor } = req.body; // <-- Captura também o "valor"
+
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
@@ -315,10 +315,13 @@ app.post('/gerar-gov', async (req, res) => {
       // Adicionar valor com fundo verde
       ctx.fillStyle = 'green';
       ctx.fillRect(630, 190, 100, 20); // 40 pixels abaixo do primeiro retângulo
-      
+
       ctx.font = '16px Arial Bold';
       ctx.fillStyle = 'white';
-      ctx.fillText('R$ 42,90', 453, 231); // Ajustado para ficar centralizado no novo retângulo
+
+      // Se não vier valor no body, usar padrão de 42,90
+      const valorFinal = valor || '42,90';      
+      ctx.fillText(`R$ ${valorFinal}`, 453, 231); 
       
       // Gerar nome único para o arquivo
       const fileName = `gov-${crypto.randomBytes(8).toString('hex')}.png`;
@@ -358,6 +361,7 @@ app.post('/gerar-gov', async (req, res) => {
     });
   }
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
