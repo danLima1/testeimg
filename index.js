@@ -194,7 +194,7 @@ app.post('/gerar-cartao', async (req, res) => {
       const image = await Jimp.read(baseImagePath);
       
       // Carregar a fonte
-      const font = await Jimp.loadFont(Jimp.FONT_SANS_32_WHITE);
+      const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
       
       // Pegar apenas o primeiro nome e último nome
       const primeiro = primeiroNome.split(' ')[0];
@@ -212,8 +212,8 @@ app.post('/gerar-cartao', async (req, res) => {
       const textHeight = Jimp.measureTextHeight(font, text, textWidth);
       
       // Calcular posição para centralizar (com ajustes para baixo e esquerda)
-      const x = ((imageWidth - textWidth) / 2) - 100; // subtraindo 100 para mover para esquerda
-      const y = ((imageHeight - textHeight) / 2) + 150; // aumentado para +150 para descer mais o texto
+      const x = ((imageWidth - textWidth) / 2) - 160; // subtraindo 100 para mover para esquerda
+      const y = ((imageHeight - textHeight) / 2) + 250; // aumentado para +150 para descer mais o texto
       
       // Adicionar texto na imagem
       image.print(
