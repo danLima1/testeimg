@@ -212,8 +212,8 @@ app.post('/gerar-cartao', async (req, res) => {
       const textHeight = Jimp.measureTextHeight(font, text, textWidth);
       
       // Calcular posição para centralizar (com ajustes para baixo e esquerda)
-      const x = ((imageWidth - textWidth) / 2) - 160; // subtraindo 100 para mover para esquerda
-      const y = ((imageHeight - textHeight) / 2) + 250; // aumentado para +150 para descer mais o texto
+      const x = ((imageWidth - textWidth) / 2) - 190; // subtraindo 100 para mover para esquerda
+      const y = ((imageHeight - textHeight) / 2) + 330; // aumentado para +150 para descer mais o texto
       
       // Adicionar texto na imagem
       image.print(
