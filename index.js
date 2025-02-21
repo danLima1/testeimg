@@ -11,7 +11,6 @@ const { createCanvas, loadImage, registerFont } = require('canvas');
 
 const app = express();
 
-// Configure CORS
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
@@ -21,19 +20,15 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Middleware
 app.use(bodyParser.json());
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Ensure directories exist
 const publicImagesDir = path.join(__dirname, 'public', 'images');
 fs.mkdir(publicImagesDir, { recursive: true }).catch(console.error);
 
-// Também criar o diretório views
 const viewsDir = path.join(__dirname, 'views');
 fs.mkdir(viewsDir, { recursive: true }).catch(console.error);
 
-// Função para obter o caminho do Chrome baseado no ambiente
 const getChromePath = () => {
   if (process.env.NODE_ENV === 'production') {
     return '/app/.chrome-for-testing/chrome-linux64/chrome';
@@ -79,7 +74,6 @@ app.post('/gerar-comprovante', async (req, res) => {
     const templatePath = path.join(__dirname, 'views', 'comprovante.ejs');
     console.log('Caminho do template:', templatePath);
 
-    // Verifica se o arquivo existe
     await fs.access(templatePath);
 
     const html = await ejs.renderFile(templatePath, {
@@ -140,7 +134,6 @@ app.post('/gerar-comprovante', async (req, res) => {
     const imageUrl = `${req.protocol}://${req.get('host')}/public/images/${fileName}`;
     console.log('URL da imagem:', imageUrl);
     
-    // Fechar o browser após tudo estar pronto
     if (browser) {
       await browser.close();
       console.log('Browser fechado com sucesso');
@@ -151,7 +144,6 @@ app.post('/gerar-comprovante', async (req, res) => {
       imageUrl: imageUrl
     });
     
-    // Limpar imagens antigas após um tempo
     setTimeout(async () => {
       try {
         await fs.unlink(filePath);
@@ -159,11 +151,10 @@ app.post('/gerar-comprovante', async (req, res) => {
       } catch (err) {
         console.error('Erro ao remover arquivo:', err);
       }
-    }, 1800000); // 30 minutos
+    }, 1800000); 
     
   } catch (error) {
     console.error('Erro detalhado:', error);
-    // Garantir que o browser seja fechado mesmo em caso de erro
     if (browser) {
       try {
         await browser.close();
@@ -189,51 +180,39 @@ app.post('/gerar-cartao', async (req, res) => {
     }
 
     try {
-      // Carregar a imagem base do cartão
       const baseImagePath = path.join(__dirname, 'public', 'images', 'card-base.png');
       const image = await Jimp.read(baseImagePath);
       
-      // Carregar a fonte
       const font = await Jimp.loadFont(Jimp.FONT_SANS_64_WHITE);
       
-      // Pegar apenas o primeiro nome e último nome
       const primeiro = primeiroNome.split(' ')[0];
       const ultimo = ultimoNome.split(' ').pop();
       
-      // Texto a ser adicionado (apenas primeiro e último nome em maiúsculas)
       const text = `${primeiro} ${ultimo}`.toUpperCase();
       
-      // Obter dimensões da imagem
       const imageWidth = image.getWidth();
       const imageHeight = image.getHeight();
       
-      // Medir o texto para centralizá-lo
       const textWidth = Jimp.measureText(font, text);
       const textHeight = Jimp.measureTextHeight(font, text, textWidth);
       
-      // Calcular posição para centralizar (com ajustes para baixo e esquerda)
       const x = ((imageWidth - textWidth) / 2) - 230; // subtraindo 100 para mover para esquerda
       const y = ((imageHeight - textHeight) / 2) + 330; // aumentado para +150 para descer mais o texto
       
-      // Adicionar texto na imagem
       image.print(
         font,
-        x, // posição X ajustada para esquerda
-        y, // posição Y ajustada mais para baixo
+        x, 
+        y, 
         text
       );
       
-      // Gerar nome único para o arquivo
       const fileName = `card-${crypto.randomBytes(8).toString('hex')}.png`;
       const outputPath = path.join(publicImagesDir, fileName);
       
-      // Salvar a imagem
       await image.writeAsync(outputPath);
       
-      // Gerar URL da imagem
       const imageUrl = `${req.protocol}://${req.get('host')}/public/images/${fileName}`;
       
-      // Limpar a imagem após 30 minutos
       setTimeout(async () => {
         try {
           await fs.unlink(outputPath);
@@ -263,48 +242,36 @@ app.post('/gerar-cartao', async (req, res) => {
 
 app.post('/gerar-gov', async (req, res) => {
   try {
-    const { nome, valor } = req.body; // <-- Captura também o "valor"
-
+    const { nome, valor } = req.body; 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
     }
 
     try {
-      // Registrar a fonte
       registerFont(path.join(__dirname, 'fonts', 'arial-bold-20.fnt.TTF'), { family: 'Arial Bold' });
       
-      // Carregar a imagem base
       const baseImagePath = path.join(__dirname, 'public', 'images', 'gov.jpeg');
       const baseImage = await loadImage(baseImagePath);
       
-      // Criar canvas com as dimensões da imagem
       const canvas = createCanvas(baseImage.width, baseImage.height);
       const ctx = canvas.getContext('2d');
       
-      // Desenhar imagem base
       ctx.drawImage(baseImage, 0, 0);
       
-      // Configurar fonte para o nome
       ctx.font = '16px "Arial Bold"';
       ctx.fillStyle = '#000000';
       
-      // Adicionar nome
       ctx.fillText(nome, 25, 135);
       
-      // Configurar fonte menor para as datas
       ctx.font = '13px "Arial Bold"';
       
-      // Data atual para vencimento
       const dataAtual = new Date();
-      // Ajusta para o fuso horário do Brasil (GMT-3)
       const dataAjustada = new Date(dataAtual.getTime() - (3 * 60 * 60 * 1000));
-      const dataFormatada = dataAjustada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); // Formato DD/MM/YYYY
+      const dataFormatada = dataAjustada.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }); 
       
-      // Adicionar datas em preto
       ctx.fillStyle = '#000000';
       ctx.fillText(dataFormatada, 137, 180);
       
-      // Adicionar data branca com fundo verde
       ctx.fillStyle = 'green';
       ctx.fillRect(630, 150, 100, 20);
       
@@ -312,26 +279,21 @@ app.post('/gerar-gov', async (req, res) => {
       ctx.fillStyle = 'white';
       ctx.fillText(dataFormatada, 453, 182);
       
-      // Adicionar valor com fundo verde
       ctx.fillStyle = 'green';
       ctx.fillRect(630, 190, 100, 20); // 40 pixels abaixo do primeiro retângulo
 
       ctx.font = '16px Arial Bold';
       ctx.fillStyle = 'white';
 
-      // Se não vier valor no body, usar padrão de 42,90
       const valorFinal = valor || '42,90';      
       ctx.fillText(`R$ ${valorFinal}`, 453, 231); 
       
-      // Gerar nome único para o arquivo
       const fileName = `gov-${crypto.randomBytes(8).toString('hex')}.png`;
       const outputPath = path.join(publicImagesDir, fileName);
       
-      // Salvar a imagem
       const buffer = canvas.toBuffer('image/png');
       await fs.writeFile(outputPath, buffer);
       
-      // Gerar URL da imagem
       const imageUrl = `${req.protocol}://${req.get('host')}/public/images/${fileName}`;
       
       // Limpar a imagem após 30 minutos
